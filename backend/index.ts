@@ -1,16 +1,23 @@
 import express from "express";
+import cors from "cors";
 import { tavily } from '@tavily/core'
 import { streamText } from 'ai'
 import { GoogleGenAI } from "@google/genai";
 import { PROMPT_TEMPLATE, SYSTEM_PROMPT } from "./prompt";
+import middleware from "./middleware";
+import { prisma } from "./db";
 
 const client = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
 const app = express();
 
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+}));
 app.use(express.json());
 
-app.post('/purplexity_ask', async (req, res) => {
+app.post('/purplexity_ask', middleware, async (req, res) => {
     //STEP-1 get the query from the frontend
 
     const query = req.body.query;
@@ -77,4 +84,10 @@ app.post('/purplexity_ask', async (req, res) => {
     //STEP-8 close the stream
     res.end();
 })
-app.listen(3000);
+
+app.get('/conversations', middleware, async (req, res) => {
+    const conversations = await prisma.converstaion.findMany({ where: { userId: req.userId }, include: { messages: true } });
+    res.status(200).json(conversations);
+    
+})
+app.listen(3001);

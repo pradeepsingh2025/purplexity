@@ -1,12 +1,16 @@
+import Converations from "@/components/Converations";
 import { createClient } from "@/lib/client";
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import type { Conversation } from "@/types";
 
 const supabase = createClient();
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+
     const navigate = useNavigate();
     useEffect(() => {
         async function getUser() {
@@ -18,6 +22,33 @@ export default function Dashboard() {
         }
         getUser();
     }, []);
+
+    useEffect(() => {
+
+        async function getConversations() {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                console.error("No token");
+                return;
+            }
+            const response = await fetch("http://localhost:3001/conversations", {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+            }) as Response;
+            if (!response.ok) {
+                console.error(response.statusText);
+            }
+            const data = await response.json();
+            setConversations(data as Conversation[]);
+        }
+        if (user) {
+            getConversations();
+        }
+    }, [user]);
     return (
         <div>
             <h1>Dashboard</h1>
@@ -27,6 +58,8 @@ export default function Dashboard() {
                 await supabase.auth.signOut();
                 navigate("/auth");
             }}>Sign Out</button>}
+
+            <Converations conversations={conversations} />
         </div>
     )
 }
