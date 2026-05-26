@@ -15,10 +15,9 @@ export default function Auth() {
         })
     }
     return (
-        <div>
-            <h1>Auth page</h1>
-            <button onClick={() => login("google")}>Login with Google</button>
-            <button onClick={() => login("github")}>Login with Github</button>
+        <div className="flex flex-col gap-5 items-center justify-center">
+            <button onClick={() => login("google")} className="border-2 border-b-black px-4 py-2 cursor-pointer">Login with Google</button>
+            <button onClick={() => login("github")} className="border-2 border-b-black px-4 py-2 cursor-pointer">Login with Github</button>
         </div>
     )
 }

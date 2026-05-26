@@ -2,6 +2,8 @@ export enum MessageRole {
     User = "user",
     Assistant = "assistant",
 }
+export type Role = "user" | "assistant";
+
 export interface Message {
     id: string;
     content: string;
@@ -9,7 +11,7 @@ export interface Message {
     createdAt: Date;
 }
 export interface Conversation {
-    id: string;
+    id?: string;
     title: string;
     slug: string;
     userId: string;

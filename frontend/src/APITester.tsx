@@ -16,6 +16,8 @@ export function APITester() {
       const formData = new FormData(form);
       const endpoint = formData.get("endpoint") as string;
       const url = new URL(endpoint, location.href);
+      // console.log(url);
+      // console.log(location.href);
       const method = formData.get("method") as string;
       const res = await fetch(url, { method });
 

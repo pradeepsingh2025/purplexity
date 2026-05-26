@@ -86,8 +86,8 @@ app.post('/purplexity_ask', middleware, async (req, res) => {
 })
 
 app.get('/conversations', middleware, async (req, res) => {
-    const conversations = await prisma.converstaion.findMany({ where: { userId: req.userId }, include: { messages: true } });
+    const conversations = await prisma.converstaion.findMany({ where: { userId: req.userId } });
     res.status(200).json(conversations);
-    
+
 })
 app.listen(3001);
