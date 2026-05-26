@@ -37,11 +37,11 @@ model Message {
 }
 
 enum MessageRole {
-  User
-  Assistant
+  user
+  assistant
 }
 
 enum AuthProvider {
-  Github
-  Google
+  github
+  google
 }
