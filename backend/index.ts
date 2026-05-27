@@ -25,7 +25,7 @@ app.post('/purplexity_ask', middleware, async (req, res) => {
 
 
     const conversation = conversationId
-        ? await prisma.conversation.findUnique({ where: { id: conversationId }, include: { messages: true } })
+        ? await prisma.conversation.findUnique({ where: { id: conversationId }})
         : await createConversation(query, req.userId);
 
     if (!conversation) {

@@ -70,9 +70,6 @@ export async function createConversation(query: string, userId: string) {
             userId: userId,
             title: title,
             slug: slug,
-        },
-        include: {
-            messages: true
         }
     })
 
