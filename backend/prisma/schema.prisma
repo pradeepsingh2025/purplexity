@@ -14,13 +14,13 @@ model User {
   email         String         @unique  
   provider      AuthProvider
   name          String
-  conversations Converstaion[]
+  conversations Conversation[]
 }
 
-model Converstaion {
+model Conversation {
   id       String    @id @default(uuid())
   title    String?
-  slug     String
+  slug     String     @unique
   userId   String
   messages Message[]
   user     User      @relation(fields: [userId], references: [id])
@@ -30,10 +30,10 @@ model Message {
   id             Int           @id @default(autoincrement())
   content        String
   role           MessageRole
-  conversationId String
+  conversationId String?
   createdAt      DateTime      @default(now())
-  converstaion   Converstaion? @relation(fields: [converstaionId], references: [id])
-  converstaionId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  
 }
 
 enum MessageRole {

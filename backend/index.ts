@@ -6,6 +6,7 @@ import { GoogleGenAI } from "@google/genai";
 import { PROMPT_TEMPLATE, SYSTEM_PROMPT } from "./prompt";
 import middleware from "./middleware";
 import { prisma } from "./db";
+import { createConversation } from "./helpers";
 
 const client = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
@@ -20,7 +21,25 @@ app.use(express.json());
 app.post('/purplexity_ask', middleware, async (req, res) => {
     //STEP-1 get the query from the frontend
 
-    const query = req.body.query;
+    const { conversationId, query } = req.body;
+
+
+    const conversation = conversationId
+        ? await prisma.conversation.findUnique({ where: { id: conversationId }, include: { messages: true } })
+        : await createConversation(query, req.userId);
+
+    if (!conversation) {
+        res.status(404).json({ error: "Conversation not found" });
+        return;
+    }
+
+    await prisma.message.create({
+        data: {
+            role: "user",
+            content: query,
+            conversationId: conversation.id,
+        },
+    });
 
     //STEP-2 check the user has access/conversation
 
@@ -85,9 +104,27 @@ app.post('/purplexity_ask', middleware, async (req, res) => {
     res.end();
 })
 
+
 app.get('/conversations', middleware, async (req, res) => {
-    const conversations = await prisma.converstaion.findMany({ where: { userId: req.userId } });
-    res.status(200).json(conversations);
+    try {
+        const conversations = await prisma.conversation.findMany({ where: { userId: req.userId }, select: { title: true, slug: true } });
+        res.status(200).json(conversations);
+    } catch (error) {
+        res.status(403).json({ error });
+    }
+})
+
+app.get('/conversations/:conversationId', middleware, async (req, res) => {
+    try {
+        const conversationId = JSON.stringify(req.params.conversationId);
+
+        const conversations = await prisma.conversation.findUnique({ where: { id: conversationId, userId: req.userId }, include: { messages: true } })
+
+        res.status(200).json(conversations);
+    } catch (error) {
+        res.status(403).json({ error: error });
+    }
 
 })
+
 app.listen(3001);
