@@ -25,7 +25,7 @@ app.post('/purplexity_ask', middleware, async (req, res) => {
 
 
     const conversation = conversationId
-        ? await prisma.conversation.findUnique({ where: { id: conversationId }})
+        ? await prisma.conversation.findUnique({ where: { id: conversationId } })
         : await createConversation(query, req.userId);
 
     if (!conversation) {
@@ -87,11 +87,23 @@ app.post('/purplexity_ask', middleware, async (req, res) => {
     //     res.write(textPart);
     // }
 
+    let fullResponse: string = "";
+
     for await (const chunk of responseStream) {
         if (chunk.text) {
+            fullResponse += chunk.text
             res.write(chunk.text);
         }
     }
+    console.log(fullResponse);
+
+    await prisma.message.create({
+        data: {
+            role: "assistant",
+            content: fullResponse,
+            conversationId: conversation.id
+        }
+    })
 
     res.write("\n<SOURCES>\n")
     //STEP-7 stream back the resources and follow up questions from another parallel LLM call

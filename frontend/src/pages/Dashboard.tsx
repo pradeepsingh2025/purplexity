@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { INITIAL_CONVERSATIONS, MOCK_USER } from "@/constants";
 import type { Conversation, Message } from "@/types";
 import {
     Tooltip,
@@ -27,10 +26,18 @@ export default function ChatInterface() {
     const [user, setUser] = useState<User | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isStreaming, setIsStreaming] = useState(false);
     const [input, setInput] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [search, setSearch] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [token, setToken] = useState("")
+
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+
+
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -38,7 +45,23 @@ export default function ChatInterface() {
     const activeConvo = conversations.find((c) => c.id === activeId) ?? null;
 
     // console.log("userID",user?.id);
-    console.log("UID",uid());
+    console.log("UID", uid());
+
+    useEffect(() => {
+        const getToken = async () => {
+            const { data, error } = await supabase.auth.getSession();
+
+            if (data?.session) {
+                const token = data.session.access_token;
+                setToken(token)
+            }
+            if (error) {
+                console.log(error);
+            }
+
+        }
+        getToken();
+    }, [])
 
     useEffect(() => {
         async function getUser() {
@@ -104,52 +127,62 @@ export default function ChatInterface() {
 
     const handleSend = useCallback(async () => {
         const text = input.trim();
-        if (!text || isTyping) return;
+        if (!text || isTyping || isStreaming) return;
         setInput("");
 
         let cid = activeId;
 
         // Create new conversation if none active
-        if (!cid) {
-            const newConvo: Conversation = {
-                title: clamp(text, 42),
-                messages: [],
-                slug: text.toLowerCase().replace(/ /g, "-"),
-                userId: user!.id,
-            };
+        // if (!cid) {
+        //     const newConvo: Conversation = {
+        //         title: clamp(text, 42),
+        //         messages: [],
+        //         slug: text.toLowerCase().replace(/ /g, "-"),
+        //         userId: user!.id,
+        //     };
 
-            
-            
-            setConversations((prev) => [newConvo, ...prev]);
-            cid = newConvo.id!;
-            setActiveId(cid);
-        }
 
-        const userMsg: Message = {
-            id: uid(),
-            role: MessageRole.User,
-            content: text,
-            createdAt: new Date(),
-        };
 
-        setConversations((prev) =>
-            prev.map((c) => (c.id === cid ? { ...c, messages: [...c.messages, userMsg] } : c))
-        );
+        //     setConversations((prev) => [newConvo, ...prev]);
+        //     cid = newConvo.id!;
+        //     setActiveId(cid);
+        // }
+
+        // const userMsg: Message = {
+        //     id: uid(),
+        //     role: MessageRole.User,
+        //     content: text,
+        //     createdAt: new Date(),
+        // };
+
+        // setConversations((prev) =>
+        //     prev.map((c) => (c.id === cid ? { ...c, messages: [...c.messages, userMsg] } : c))
+        // );
         setIsTyping(true);
 
         // Simulate AI latency
-        await new Promise((r) => setTimeout(r, 1000 + Math.random() * 1000));
+        const response = await fetch('http://localhost:3001/purplexity_ask', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                conversationId: cid,
+                query: text
+            })
+        })
 
-        const aiMsg: Message = {
-            id: uid(),
-            role: MessageRole.Assistant,
-            content: `You said: "${text}". Wire up a real AI backend here to get live responses — replace this block with a fetch() to your API.`,
-            createdAt: new Date(),
-        };
+        // const aiMsg: Message = {
+        //     id: uid(),
+        //     role: MessageRole.Assistant,
+        //     content: `You said: "${text}". Wire up a real AI backend here to get live responses — replace this block with a fetch() to your API.`,
+        //     createdAt: new Date(),
+        // };
 
-        setConversations((prev) =>
-            prev.map((c) => (c.id === cid ? { ...c, messages: [...c.messages, aiMsg] } : c))
-        );
+        // setConversations((prev) =>
+        //     prev.map((c) => (c.id === cid ? { ...c, messages: [...c.messages, aiMsg] } : c))
+        // );
         setIsTyping(false);
     }, [input, activeId, isTyping]);
 
