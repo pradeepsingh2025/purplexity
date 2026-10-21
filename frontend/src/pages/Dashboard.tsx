@@ -47,6 +47,8 @@ export default function ChatInterface() {
     // console.log("userID",user?.id);
     console.log("UID", uid());
 
+
+    //getting token
     useEffect(() => {
         const getToken = async () => {
             const { data, error } = await supabase.auth.getSession();
@@ -63,6 +65,7 @@ export default function ChatInterface() {
         getToken();
     }, [])
 
+    //getting user
     useEffect(() => {
         async function getUser() {
             const { data, error } = await supabase.auth.getUser();
@@ -74,6 +77,8 @@ export default function ChatInterface() {
         getUser();
     }, []);
 
+
+    //getting conversations
     useEffect(() => {
 
         async function getConversations() {
